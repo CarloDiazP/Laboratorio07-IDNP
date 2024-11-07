@@ -7,6 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Button
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.example.laboratorio07.models.Edificio
 import com.example.laboratorio07.R
 
@@ -26,7 +27,8 @@ class EdificiosAdapter(private val edificios: List<Edificio>) : RecyclerView.Ada
     override fun onBindViewHolder(holder: EdificioViewHolder, position: Int) {
         val edificio = edificios[position]
         holder.nameTextView.text = edificio.name
-        holder.imageView.setImageResource(edificio.imageResource)
+        Glide.with(holder.itemView.context).load(edificio.imageURL).into(holder.imageView)
+        //holder.imageView.setImageResource(edificio.imageResource)
         // Agregar lógica de click en el botón, si es necesario
     }
 
