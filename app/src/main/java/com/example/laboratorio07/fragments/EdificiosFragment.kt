@@ -1,16 +1,23 @@
 package com.example.laboratorio07.fragments
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import androidx.core.widget.addTextChangedListener
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.laboratorio07.R
 import com.example.laboratorio07.adapters.CategoryAdapter
 import com.example.laboratorio07.models.Edificio
 import com.example.laboratorio07.models.Category
+import com.example.laboratorio07.models.CategoryList
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -44,29 +51,57 @@ class EdificiosFragment : Fragment() {
         // Obtener el RecyclerView
         val recyclerViewCategories: RecyclerView = view.findViewById(R.id.recyclerViewCategories)
 
-        // Crear lista de ejemplo de categorías y edificios
-        val edificiosIglesias = listOf(
-            Edificio("Iglesia 1", R.drawable.iglesia_prueba),
-            Edificio("Iglesia 2", R.drawable.iglesia_prueba),
-            Edificio("Iglesia 3", R.drawable.iglesia_prueba)
-        )
-        val edificiosMuseos = listOf(
-            Edificio("Museo 1", R.drawable.iglesia_prueba),
-            Edificio("Museo 2", R.drawable.iglesia_prueba),
-            Edificio("Museo 3", R.drawable.iglesia_prueba)
-        )
+        // Cargar data desde Json
+        val categories = parseCategoriesFromJSON(requireContext())
 
-        val categories = listOf(
-            Category("Iglesias", edificiosIglesias),
-            Category("Museos", edificiosMuseos)
-        )
 
         // Configurar RecyclerView
         recyclerViewCategories.layoutManager = LinearLayoutManager(context)
         recyclerViewCategories.adapter = CategoryAdapter(categories)
 
+        // Configurar escucha de eventos al cambiar buscador
+        val searchText = view.findViewById<EditText>(R.id.searchText)
+
+        searchText.addTextChangedListener { text ->
+
+            // Se convierte el texto a minúsculas para hacer la búsqueda no sensible a mayúsculas
+            val query = text.toString().trim().lowercase()
+
+            // Se crea una lista temporal de todos los edificios sin importar la categoría
+            val allBuildings = categories.flatMap { it.edificios }
+
+            // Se filtra los edificios cuyo nombre contenga el texto ingresado
+            val filteredBuildings = if (query.isNotEmpty()) {
+                allBuildings.filter { it.name.lowercase().contains(query) }
+            } else {
+                allBuildings // Si el texto está vacío, mostramos todos los edificios
+            }
+
+            // Se agrupa los edificios filtrados nuevamente por categoría para actualizar el adaptador
+            val filteredCategories = categories.map { category ->
+                val filteredEdificios = filteredBuildings.filter { it in category.edificios }
+                Category(category.name, filteredEdificios)
+            }.filter { it.edificios.isNotEmpty() } // Eliminamos las categorías sin resultados
+
+            (recyclerViewCategories.adapter as? CategoryAdapter)?.updateCategory(filteredCategories)
+
+        }
+
+
         return view
     }
+
+    private fun loadJSONFromAsset(context: Context, fileName: String): String {
+        return context.assets.open(fileName).bufferedReader().use { it.readText() }
+    }
+
+    fun parseCategoriesFromJSON(context: Context): List<Category> {
+        val json = loadJSONFromAsset(context, "data.json")
+        val gson = Gson()
+        val categoryList = gson.fromJson(json, CategoryList::class.java)
+        return categoryList.categories // Retorna solo la lista de categorías
+    }
+
 
     companion object {
         /**

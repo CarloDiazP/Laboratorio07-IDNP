@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.laboratorio07.models.Category
 import com.example.laboratorio07.R
 
-class CategoryAdapter(private val categories: List<Category>) : RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder>() {
+class CategoryAdapter(private var categories: List<Category>) : RecyclerView.Adapter<CategoryAdapter.CategoryViewHolder>() {
 
     class CategoryViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val categoryTitle: TextView = itemView.findViewById(R.id.categoryTitle)
@@ -31,4 +31,10 @@ class CategoryAdapter(private val categories: List<Category>) : RecyclerView.Ada
     }
 
     override fun getItemCount() = categories.size
+
+    fun updateCategory(categoryList: List<Category>) {
+        this.categories = categoryList
+        notifyDataSetChanged()
+    }
+
 }
